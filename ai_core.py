@@ -9,16 +9,23 @@ from game_environment import GameObject
 
 class AIBot:
     def __init__(self):
+        print("Initializing AI Bot components...")
+        print("- Creating Pattern Recognizer")
         self.pattern_recognizer = PatternRecognizer()
+        print("- Setting up State Machine")
         self.state_machine = StateMachine()
+        print("- Initializing Data Collector")
         self.data_collector = DataCollector()
+        print("- Creating OpenAI Analyzer")
         self.openai_analyzer = OpenAIAnalyzer()
+        print("- Setting up Screen Observer")
         self.screen_observer = ScreenObserver(callback=self._handle_observation)
         self.current_state = 'idle'
-        self.current_target: Optional[GameObject] = None
-        self.inventory: Dict = {}
-        self.recent_actions: List[Dict] = []
-        self.learned_patterns: List[Dict] = []
+        self.current_target = None
+        self.inventory = {}
+        self.recent_actions = []
+        self.learned_patterns = []
+        print("AI Bot initialization complete")
 
     def start_learning(self, game_window_region: Optional[Tuple[int, int, int, int]] = None) -> None:
         """Start observing and learning from player gameplay"""

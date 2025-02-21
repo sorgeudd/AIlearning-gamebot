@@ -1,3 +1,4 @@
+import os
 import tkinter as tk
 from tkinter import ttk, messagebox
 from game_environment import GameEnvironment
@@ -11,7 +12,7 @@ class GameAIInterface:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Game AI Learning Interface")
-        self.root.geometry("800x600")  # Increased size for better visibility
+        self.root.geometry("800x600")
         self.setup_ui()
 
         print("Initializing game environment...")
@@ -21,6 +22,9 @@ class GameAIInterface:
 
         self.is_running = False
         self.is_learning = False
+
+        # Schedule auto-test for headless environment
+        self.root.after(2000, self._auto_test)
 
     def setup_ui(self):
         # Create main frame with padding
@@ -43,7 +47,12 @@ class GameAIInterface:
         self.status_frame = ttk.LabelFrame(main_frame, text="Status", padding="5")
         self.status_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
 
-        self.status_text = tk.Text(self.status_frame, height=10, wrap=tk.WORD)
+        # Add debug checkbox
+        self.debug_var = tk.BooleanVar(value=True)
+        ttk.Checkbutton(self.status_frame, text="Show Debug Info", 
+                       variable=self.debug_var).pack(anchor=tk.W)
+
+        self.status_text = tk.Text(self.status_frame, height=15, wrap=tk.WORD)
         self.status_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         # Add scrollbar to status text
@@ -58,15 +67,15 @@ class GameAIInterface:
 
         # Control buttons with improved styling
         self.learn_button = ttk.Button(button_frame, text="Learn from Gameplay", 
-                                     command=self.toggle_learning)
+                                    command=self._safe_toggle_learning)
         self.learn_button.pack(side=tk.LEFT, padx=5)
 
         self.start_button = ttk.Button(button_frame, text="Start AI Control", 
-                                     command=self.start_ai)
+                                    command=self.start_ai)
         self.start_button.pack(side=tk.LEFT, padx=5)
 
         self.stop_button = ttk.Button(button_frame, text="Stop", 
-                                    command=self.stop_all)
+                                   command=self.stop_all)
         self.stop_button.pack(side=tk.LEFT, padx=5)
 
         # Window region frame
@@ -78,10 +87,50 @@ class GameAIInterface:
         self.region_entry.insert(0, "0,0,800,600")
 
         ttk.Label(region_frame, 
-                 text="Format: x1,y1,x2,y2 (coordinates of the game window area to capture)").pack()
+                text="Format: x1,y1,x2,y2 (coordinates of the game window area to capture)").pack()
 
         # Key binding for stop (Escape key)
         self.root.bind('<Escape>', lambda e: self.stop_all())
+
+        # Add test key binding for debugging (Ctrl+L to simulate Learn button click)
+        self.root.bind('<Control-l>', lambda e: self._test_learn_button())
+
+        # Debug print on initialization
+        print("\nUI Initialization complete")
+        print("Debug controls:")
+        print("- Ctrl+L: Simulate Learn button click")
+        print("- Escape: Stop all operations")
+
+        # Initialize system status
+        self.update_status("System initialized", "Ready to start learning or AI control", clear=True)
+
+    def _test_learn_button(self):
+        """Debug function to test Learn button functionality"""
+        print("\nTest: Simulating Learn button click")
+        self._safe_toggle_learning()
+
+    def _safe_toggle_learning(self):
+        """Thread-safe wrapper for toggle_learning"""
+        try:
+            print("\nLearn button clicked - Executing safe toggle...")
+            # Force an immediate GUI update
+            self.root.update_idletasks()
+            # Execute in the main thread
+            self._execute_toggle_learning()
+        except Exception as e:
+            error_msg = f"Critical error in button handler: {e}\n{traceback.format_exc()}"
+            print(error_msg)
+            messagebox.showerror("Critical Error", str(e))
+
+    def _execute_toggle_learning(self):
+        """Execute toggle_learning in the main thread"""
+        try:
+            print("Executing toggle_learning in main thread")
+            self.toggle_learning()
+        except Exception as e:
+            error_msg = f"Error in toggle execution: {e}\n{traceback.format_exc()}"
+            print(error_msg)
+            self.update_status("Error", error_msg)
 
     def update_status(self, status: str, details: str = "", clear: bool = False):
         """Update status with optional details"""
@@ -96,15 +145,26 @@ class GameAIInterface:
             else:
                 status_msg += "\n"
 
-            self.status_text.insert(tk.END, status_msg)
-            self.status_text.see(tk.END)  # Auto-scroll to bottom
-            self.root.update()
+            print(f"\nStatus Update: {status_msg.strip()}")
+            # Use after to ensure thread-safe update
+            self.root.after(0, lambda: self._safe_text_update(status_msg))
+
         except Exception as e:
             print(f"Error updating status: {e}")
+
+    def _safe_text_update(self, text: str):
+        """Thread-safe text widget update"""
+        try:
+            self.status_text.insert(tk.END, text)
+            self.status_text.see(tk.END)
+            self.root.update_idletasks()
+        except Exception as e:
+            print(f"Error in safe text update: {e}")
 
     def toggle_learning(self):
         if not self.is_learning:
             try:
+                print("\nLearn button pressed - Starting learning mode...")
                 # Parse region
                 region_str = self.region_entry.get().strip()
                 try:
@@ -118,49 +178,77 @@ class GameAIInterface:
                         "Invalid region format. Please use four numbers separated by commas (x1,y1,x2,y2)")
 
                 self.update_status("Starting learning mode...", 
-                                "Initializing screen capture...", clear=True)
+                                "Initializing screen capture and testing display access...", clear=True)
 
                 def observation_callback(analysis: Dict):
                     """Callback to handle screen observations"""
                     try:
                         frame_data = analysis.get('frame_data', {})
                         movement = frame_data.get('movement_value', 0)
-                        analysis_time = frame_data.get('analysis_time', 0)
                         frame_size = frame_data.get('frame_size', (0, 0))
+                        brightness = frame_data.get('brightness', 0)
 
-                        details = (
-                            f"Capture Region: {region}\n"
-                            f"Frame Size: {frame_size}\n"
-                            f"Movement: {movement:.1f}\n"
-                            f"Analysis Time: {analysis_time:.1f}ms"
-                        )
-                        self.update_status("Learning in Progress", details)
+                        if self.debug_var.get():
+                            details = (
+                                f"Screen Analysis Debug Info:\n"
+                                f"• Capture Region: {region}\n"
+                                f"• Frame Size: {frame_size}\n"
+                                f"• Movement Detected: {movement:.1f}\n"
+                                f"• Brightness: {brightness:.1f}\n"
+                                f"• Status: {self.ai_bot.current_state}\n"
+                                f"• Analysis Timestamp: {time.strftime('%H:%M:%S')}\n"
+                            )
+                            print(f"\nDebug: Received frame analysis:\n{details}")
+                        else:
+                            details = f"Learning from gameplay... Movement: {movement:.1f}"
 
-                        # Print detailed metrics for debugging
-                        print(f"Screen Observation Metrics:\n{details}")
+                        # Use after() to ensure thread-safe UI updates
+                        self.root.after(100, lambda: self.update_status(
+                            "Learning in Progress", details))
 
                     except Exception as e:
                         error_msg = f"Callback error: {e}\n{traceback.format_exc()}"
                         print(error_msg)
-                        self.update_status("Warning", f"Observation error: {str(e)}")
+                        self.root.after(100, lambda: self.update_status(
+                            "Warning", f"Observation error: {str(e)}"))
 
+                print("Setting up observation callback...")
                 # Set the callback before starting learning
                 self.ai_bot.screen_observer.callback = observation_callback
 
-                # Start the AI in learning mode
-                self.ai_bot.start_learning(region)
+                # Start the AI in learning mode with additional error handling
+                try:
+                    print("Attempting to start learning mode...")
+                    self.ai_bot.start_learning(region)
+                    print("Learning mode started successfully")
+                except Exception as e:
+                    error_msg = f"Failed to start learning mode: {e}\n{traceback.format_exc()}"
+                    print(error_msg)
+                    raise Exception(f"Screen capture initialization failed: {e}")
 
                 self.is_learning = True
                 self.learn_button.configure(text="Stop Learning")
                 self.start_button.state(['disabled'])
+                self.update_status("Learning mode active", 
+                                "Screen observation started successfully")
 
             except Exception as e:
-                error_details = f"Error: {str(e)}\n{traceback.format_exc()}"
+                error_details = f"Error starting learning mode: {str(e)}\n{traceback.format_exc()}"
                 print(error_details)
                 messagebox.showerror("Error", f"Failed to start learning: {str(e)}")
                 self.update_status("Error", error_details)
         else:
             self.stop_learning()
+
+    def _auto_test(self):
+        """Automatically test button functionality in headless mode"""
+        print("\nAuto-test: Simulating Learn button click...")
+        try:
+            self._safe_toggle_learning()
+        except Exception as e:
+            print(f"Auto-test error: {e}")
+            traceback.print_exc()
+
 
     def stop_learning(self):
         if self.is_learning:
@@ -189,7 +277,7 @@ class GameAIInterface:
                         "Invalid region format. Please use four numbers separated by commas (x1,y1,x2,y2)")
 
                 self.update_status("Starting AI control...", 
-                                "Initializing AI systems", clear=True)
+                               "Initializing AI systems", clear=True)
 
                 self.is_running = True
                 self.start_button.configure(text="Stop AI")

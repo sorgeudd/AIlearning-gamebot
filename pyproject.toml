@@ -9,4 +9,5 @@ dependencies = [
     "opencv-python>=4.11.0.86",
     "pillow>=11.1.0",
     "scikit-learn>=1.6.1",
+    "twilio>=9.4.6",
 ]

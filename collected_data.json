@@ -1,0 +1,13 @@
+{
+  "statistics": {
+    "gathering_success": 0.0,
+    "fishing_success": 0.7395331603745672,
+    "combat_success": 0.0,
+    "total_actions": 882
+  },
+  "recent_observations": [
+    {
+      "timestamp": 1740150588.10542,
+      "data": {
+        "nearby_objects": [
+          

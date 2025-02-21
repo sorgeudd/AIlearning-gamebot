@@ -257,7 +257,7 @@ class GameAIInterface:
                         if outcome:
                             self.ai_bot.learn_from_outcome(action, outcome)
                             self.update_status("AI Control active", 
-                                         f"Action: {action['action']}, Outcome: {outcome}")
+                                             f"Action: {action['action']}, Outcome: {outcome}")
 
                 time.sleep(0.1)  # Prevent excessive CPU usage
             except Exception as e:

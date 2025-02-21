@@ -1,6 +1,6 @@
-from typing import Dict, List
+from typing import Dict
 import random
-import numpy as np
+from game_environment import GameObject
 
 class CombatManager:
     def __init__(self):
@@ -15,7 +15,7 @@ class CombatManager:
         self.consecutive_failures = 0
         self.health_threshold = 50
 
-    def evaluate_combat_target(self, enemy: Dict, current_health: int = 100) -> float:
+    def evaluate_combat_target(self, enemy: GameObject, current_health: int = 100) -> float:
         """Calculate the value/risk ratio of engaging an enemy"""
         enemy_level = enemy.properties['level']
         enemy_health = enemy.properties['health']
@@ -43,7 +43,7 @@ class CombatManager:
 
         return max(0, value - failure_penalty)
 
-    def engage_combat(self, enemy: Dict) -> Dict:
+    def engage_combat(self, enemy: GameObject) -> Dict:
         """Simulate combat with an enemy"""
         enemy_level = enemy.properties['level']
         pattern = self.combat_patterns.get(enemy_level, {

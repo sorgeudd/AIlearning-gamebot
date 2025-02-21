@@ -1,17 +1,23 @@
 import random
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, TypedDict, Union
+
+class GameObjectProperties(TypedDict, total=False):
+    resource_type: str
+    fish_type: str
+    level: int
+    health: int
 
 @dataclass
 class GameObject:
     type: str
     position: Tuple[int, int]
-    properties: Dict
+    properties: GameObjectProperties
 
 class GameEnvironment:
     def __init__(self, size: Tuple[int, int] = (100, 100)):
         self.size = size
-        self.objects = []
+        self.objects: List[GameObject] = []
         self.player_position = (0, 0)
         self.initialize_environment()
 
@@ -23,7 +29,7 @@ class GameEnvironment:
                 position=(random.randint(0, self.size[0]), random.randint(0, self.size[1])),
                 properties={'resource_type': random.choice(['wood', 'ore', 'herbs'])}
             ))
-        
+
         # Create fishing spots
         for _ in range(10):
             self.objects.append(GameObject(

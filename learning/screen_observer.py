@@ -100,6 +100,15 @@ class ScreenObserver:
 
             self.last_frame = frame.copy()
 
+            # Generate simulated game objects for testing state transitions
+            game_objects = []
+            if movement > 0.1:  # If there's movement, add some virtual objects
+                game_objects.extend([
+                    {'type': 'resource', 'position': (100, 100), 'properties': {'resource_type': 'wood'}},
+                    {'type': 'fishing_spot', 'position': (200, 200), 'properties': {'fish_type': 'common'}},
+                    {'type': 'enemy', 'position': (300, 300), 'properties': {'level': 3, 'health': 100}}
+                ])
+
             analysis_data = {
                 'timestamp': time.time(),
                 'frame_data': {
@@ -108,6 +117,11 @@ class ScreenObserver:
                     'movement_value': movement,
                     'frame_size': frame.shape,
                     'region': self.region
+                },
+                'nearby_objects': game_objects,
+                'player_status': {
+                    'health': 80,  # Simulated player health
+                    'position': (150, 150)
                 }
             }
 

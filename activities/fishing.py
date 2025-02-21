@@ -1,6 +1,7 @@
-from typing import Dict, List
+from typing import Dict
 import random
 import numpy as np
+from game_environment import GameObject
 
 class FishingManager:
     def __init__(self):
@@ -15,27 +16,27 @@ class FishingManager:
             'exotic': 5
         }
 
-    def evaluate_fishing_spot(self, fishing_spot: Dict) -> float:
+    def evaluate_fishing_spot(self, fishing_spot: GameObject) -> float:
         """Calculate the value of a fishing spot"""
         fish_type = fishing_spot.properties['fish_type']
         base_value = self.fish_values[fish_type]
         pattern_data = self.fishing_patterns[fish_type]
-        
+
         # Calculate expected value per time unit
         expected_value = (base_value * pattern_data['success_rate'] / 
                         pattern_data['avg_time'])
-        
+
         return expected_value
 
-    def fish(self, fishing_spot: Dict) -> Dict:
+    def fish(self, fishing_spot: GameObject) -> Dict:
         """Attempt to fish at a spot"""
         fish_type = fishing_spot.properties['fish_type']
         pattern = self.fishing_patterns[fish_type]
-        
+
         # Simulate fishing attempt
         success = random.random() < pattern['success_rate']
         time_taken = pattern['avg_time'] * (0.9 + random.random() * 0.2)
-        
+
         return {
             'success': success,
             'time_taken': time_taken,

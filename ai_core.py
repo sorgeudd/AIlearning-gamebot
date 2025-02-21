@@ -1,3 +1,4 @@
+import traceback
 from typing import Dict, List, Tuple, Optional
 import numpy as np
 from learning.pattern_recognition import PatternRecognizer
@@ -107,7 +108,9 @@ class AIBot:
     def decide_action(self, game_state: Dict) -> Dict:
         """Decide the next action based on current state and observations"""
         try:
+            print(f"\nDeciding action in state: {self.current_state}")
             nearby_objects = game_state.get('nearby_objects', [])
+            print(f"Nearby objects: {len(nearby_objects)}")
 
             # Update state based on environment and current goals
             new_state = self.state_machine.get_next_state(
@@ -116,6 +119,7 @@ class AIBot:
             )
 
             if new_state != self.current_state:
+                print(f"State transition: {self.current_state} -> {new_state}")
                 self.current_state = new_state
                 self.current_target = None
 
@@ -124,12 +128,16 @@ class AIBot:
 
             if self.current_state == 'gathering':
                 action = self._handle_gathering(nearby_objects)
+                print(f"Gathering action: {action}")
             elif self.current_state == 'fishing':
                 action = self._handle_fishing(nearby_objects)
+                print(f"Fishing action: {action}")
             elif self.current_state == 'combat':
                 action = self._handle_combat(nearby_objects)
+                print(f"Combat action: {action}")
             elif self.current_state == 'healing':
                 action = {'action': 'healing'}
+                print("Healing action selected")
 
             # Store action for analysis
             self.recent_actions.append(action)
@@ -138,6 +146,7 @@ class AIBot:
             return action
         except Exception as e:
             print(f"Error deciding action: {e}")
+            traceback.print_exc()
             return {'action': 'explore'}
 
     def _handle_gathering(self, nearby_objects: List[GameObject]) -> Dict:

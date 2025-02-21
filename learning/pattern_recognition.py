@@ -68,7 +68,7 @@ class PatternRecognizer:
             return features
         except Exception as e:
             print(f"Error extracting features: {e}")
-            return None
+            return []  # Return empty list instead of None
 
     def select_best_resource(self, resources: List) -> Dict:
         """Select the best resource target based on learned patterns"""
@@ -78,8 +78,8 @@ class PatternRecognizer:
         scores = []
         for resource in resources:
             # Calculate score based on type and distance
-            type_score = {'wood': 1, 'ore': 2, 'herbs': 3}.get(
-                getattr(resource, 'properties', {}).get('resource_type', ''), 1)
+            resource_type = getattr(resource, 'properties', {}).get('resource_type', '')
+            type_score = {'wood': 1, 'ore': 2, 'herbs': 3}.get(resource_type, 1)
             scores.append(type_score)
 
         best_index = int(np.argmax(scores))
@@ -93,8 +93,8 @@ class PatternRecognizer:
         scores = []
         for spot in fishing_spots:
             # Calculate score based on fish type
-            type_score = {'common': 1, 'rare': 2, 'exotic': 3}.get(
-                getattr(spot, 'properties', {}).get('fish_type', ''), 1)
+            fish_type = getattr(spot, 'properties', {}).get('fish_type', '')
+            type_score = {'common': 1, 'rare': 2, 'exotic': 3}.get(fish_type, 1)
             scores.append(type_score)
 
         best_index = int(np.argmax(scores))
@@ -108,8 +108,11 @@ class PatternRecognizer:
         scores = []
         for enemy in enemies:
             # Calculate score based on level and health
-            level_score = 10 - abs(5 - getattr(enemy, 'properties', {}).get('level', 5))
-            health_score = 100 - getattr(enemy, 'properties', {}).get('health', 100)
+            properties = getattr(enemy, 'properties', {})
+            level = properties.get('level', 5)
+            health = properties.get('health', 100)
+            level_score = 10 - abs(5 - level)
+            health_score = 100 - health
             scores.append(level_score + health_score)
 
         best_index = int(np.argmax(scores))
